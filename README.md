@@ -3,6 +3,7 @@
 ### 1. Architecture Overview
 ![diagram](diagram.png)
 
+
 Frontend: React (or plain HTML) interface for associates to manage contractors and claims.
 
 Backend: Spring Boot REST API (Java) running on a single Amazon EC2 instance.
