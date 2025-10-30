@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Contractor Management</title>
+    <style>
+        body { font-family: Arial; max-width: 1000px; margin: 20px auto; }
+        .hidden { display: none; }
+        .home-btn { display: block; width: 300px; margin: 20px auto; padding: 20px; font-size: 18px; cursor: pointer; border: none; border-radius: 5px; color: white; }
+        .btn-add { background: #007bff; }
+        .btn-view { background: #28a745; }
+        input, select { width: 200px; padding: 5px; margin: 5px; }
+        button { padding: 8px 15px; margin: 5px; cursor: pointer; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background: #007bff; color: white; }
+    </style>
+</head>
+<body>
+    <!-- Home Page -->
+    <div id="homePage">
+        <h1 style="text-align: center;">Contractor Management System</h1>
+        <button class="home-btn btn-add" onclick="showPage('add')">Add New Contractor</button>
+        <button class="home-btn btn-view" onclick="showPage('list')">View Contractor List</button>
+    </div>
+
+    <!-- Add/Edit Page -->
+    <div id="addPage" class="hidden">
+        <button onclick="showPage('home')">← Back to Home</button>
+        <h1 id="pageTitle">Add New Contractor</h1>
+        <div>
+            <input id="contractorId" type="hidden">
+            <input id="companyName" placeholder="Company Name"><br>
+            <input id="workType" placeholder="Work Type"><br>
+            <input id="taxId" placeholder="Tax ID"><br>
+            <input id="serviceArea" placeholder="Service Area"><br>
+            <input id="contactInfo" placeholder="Contact Info"><br>
+            <input id="coverageZipCodes" placeholder="Zip Codes"><br>
+            <select id="availabilityStatus">
+                <option value="">Status</option>
+                <option value="Available">Available</option>
+                <option value="Busy">Busy</option>
+                <option value="Unavailable">Unavailable</option>
+            </select><br>
+            <button onclick="save()">Save</button>
+        </div>
+    </div>
+
+    <!-- List Page -->
+    <div id="listPage" class="hidden">
+        <button onclick="showPage('home')">← Back to Home</button>
+        <h1>Contractor List</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Company</th><th>Type</th><th>Tax ID</th><th>Area</th>
+                    <th>Contact</th><th>Zips</th><th>Status</th><th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="list"></tbody>
+        </table>
+    </div>
+
+    <script>
+        let editing = null;
+
+        function showPage(page) {
+            document.getElementById('homePage').className = page === 'home' ? '' : 'hidden';
+            document.getElementById('addPage').className = page === 'add' ? '' : 'hidden';
+            document.getElementById('listPage').className = page === 'list' ? '' : 'hidden';
+
+            if (page === 'list') load();
+            if (page === 'add' && !editing) clear();
+        }
+
+        function load() {
+            fetch('/api/contractors')
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById('list').innerHTML = data.map(c => `
+                        <tr>
+                            <td>${c.companyName}</td>
+                            <td>${c.workType}</td>
+                            <td>${c.taxId}</td>
+                            <td>${c.serviceArea}</td>
+                            <td>${c.contactInfo}</td>
+                            <td>${c.coverageZipCodes}</td>
+                            <td>${c.availabilityStatus}</td>
+                            <td>
+                                <button onclick="edit(${c.id})">Edit</button>
+                                <button onclick="del(${c.id})">Delete</button>
+                            </td>
+                        </tr>
+                    `).join('');
+                });
+        }
+
+        function save() {
+            const data = {
+                companyName: document.getElementById('companyName').value,
+                workType: document.getElementById('workType').value,
+                taxId: document.getElementById('taxId').value,
+                serviceArea: document.getElementById('serviceArea').value,
+                contactInfo: document.getElementById('contactInfo').value,
+                coverageZipCodes: document.getElementById('coverageZipCodes').value,
+                availabilityStatus: document.getElementById('availabilityStatus').value
+            };
+            
+            const id = document.getElementById('contractorId').value;
+            const url = id ? `/api/contractors/${id}` : '/api/contractors';
+            const method = id ? 'PUT' : 'POST';
+            
+            fetch(url, {
+                method: method,
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            }).then(() => {
+                clear();
+                showPage('list');
+            });
+        }
+
+        function edit(id) {
+            fetch(`/api/contractors/${id}`)
+                .then(r => r.json())
+                .then(c => {
+                    editing = c.id;
+                    document.getElementById('contractorId').value = c.id;
+                    document.getElementById('companyName').value = c.companyName;
+                    document.getElementById('workType').value = c.workType;
+                    document.getElementById('taxId').value = c.taxId;
+                    document.getElementById('serviceArea').value = c.serviceArea;
+                    document.getElementById('contactInfo').value = c.contactInfo;
+                    document.getElementById('coverageZipCodes').value = c.coverageZipCodes;
+                    document.getElementById('availabilityStatus').value = c.availabilityStatus;
+                    document.getElementById('pageTitle').textContent = 'Edit Contractor';
+                    showPage('add');
+                });
+        }
+
+        function del(id) {
+            if (confirm('Delete?')) {
+                fetch(`/api/contractors/${id}`, {method: 'DELETE'})
+                    .then(() => load());
+            }
+        }
+
+        function clear() {
+            editing = null;
+            document.getElementById('contractorId').value = '';
+            document.getElementById('companyName').value = '';
+            document.getElementById('workType').value = '';
+            document.getElementById('taxId').value = '';
+            document.getElementById('serviceArea').value = '';
+            document.getElementById('contactInfo').value = '';
+            document.getElementById('coverageZipCodes').value = '';
+            document.getElementById('availabilityStatus').value = '';
+            document.getElementById('pageTitle').textContent = 'Add New Contractor';
+        }
+    </script>
+</body>
+</html>
