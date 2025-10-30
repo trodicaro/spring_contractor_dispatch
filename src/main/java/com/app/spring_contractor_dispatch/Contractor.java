@@ -11,6 +11,7 @@ public class Contractor {
     private Long id;
     private String companyName;
     private String workType;
+    @Column(unique = true, nullable = false)
     private String taxId;
     private String serviceArea;
     private String contactInfo;
