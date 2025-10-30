@@ -1,3 +1,5 @@
+`./mvnw spring-boot:run` then open in a browser page http://localhost:8080/
+
 ## System Architecture and Implementation Plan
 
 ### 1. Architecture Overview
